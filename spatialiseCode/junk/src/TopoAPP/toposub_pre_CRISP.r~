@@ -1,0 +1,167 @@
+######################################################################################################
+#	
+#			TOPOSUB PREPROCESSOR CRISP
+#			
+######################################################################################################
+
+#======================================================================================
+#				SEGMENT TOPOGRAPHY BY BOX
+#======================================================================================
+demC=crop(ddem, dshp[nbox,])
+daspC=crop(dasp, dshp[nbox,])
+dslpC=crop(dslp, dshp[nbox,])
+dskyC=crop(dsky, dshp[nbox,])
+maskC=crop(mask, dshp[nbox,])
+lcC=crop(lc, dshp[nbox,])
+writeRaster(demC, paste(spath,'/preds/ele.tif',sep=''), NAflag=-9999, overwrite=T) #(tif is smallest format half of size sdat etc)
+writeRaster(daspC, paste(spath,'/preds/asp.tif',sep=''), NAflag=-9999,overwrite=T)
+writeRaster(dslpC, paste(spath,'/preds/slp.tif',sep=''), NAflag=-9999,overwrite=T)
+writeRaster(dskyC, paste(spath,'/preds/svf.tif',sep=''), NAflag=-9999,overwrite=T)
+writeRaster(maskC, paste(spath,'/mask.tif',sep=''), NAflag=-9999,overwrite=T)
+writeRaster(lcC, paste(spath,'/surface.tif',sep=''), NAflag=-9999,overwrite=T)
+
+
+#======================================================================================
+#				Apply mask (glacier)
+#======================================================================================
+mask=raster(paste(spath,'/mask.tif',sep=''))
+predfiles=list.files(path=predRoot, pattern=predFormat,full.names=T)
+
+for(pf in predfiles){
+rst=raster(pf)
+rst[is.na(rst)]<- -1 # when flat aspects are coded NA
+rst.mask=rst*mask
+
+writeRaster(rst.mask, pf, NAflag=-9999, overwrite=T) 
+}
+
+#======================================================================================
+#				TOPOSUB CRISP
+#======================================================================================
+
+
+#==============================================================================
+# TopoSUB preprocessor
+#==============================================================================
+
+#make stack of input predictor ==> read in random sample to improve scalability
+gridmaps=stack_raster(demLoc=demLoc, predNames=predNames, predRoot=predRoot, predFormat=predFormat)
+
+#check inputs slp/asp in degrees and correct if necessary (careful if applied in flat place!)
+if(rad==T){
+	gridmaps$asp = radtodeg(gridmaps$asp)
+}
+if(rad==T){
+	gridmaps$slp = radtodeg(gridmaps$slp)
+}
+
+#na to numeric (-1) (does this work) REMOVED due to mask
+#gridmaps@data = natonum(x=gridmaps@data,predNames=predNames ,n=-1)
+
+#decompose aspect
+res=aspect_decomp(gridmaps$asp)
+res$aspC->gridmaps$aspC
+res$aspS->gridmaps$aspS
+
+#define new predNames (aspC, aspS)
+allNames<-names(gridmaps@data)
+predNames2 <- allNames[which(allNames!='landform'&allNames!='asp')]
+
+#sample inputs
+#need to generalise to accept 'data' argument
+samp_dat<-sampleRandomGrid( nRand=nRand, predNames=predNames2)
+
+if (findn==1){Nclust=findN(scaleDat=scaleDat, nMax=1000,thresh=0.05)}
+
+#make scaled (see r function 'scale()')data frame of inputs 
+scaleDat_samp= simpleScale(data=samp_dat, pnames=predNames2)
+
+#random order of kmeans init conditions (variable order) experiment
+if(randomKmeansInit==T){
+cbind(scaleDat_samp[5],scaleDat_samp[4], scaleDat_samp[3], scaleDat_samp[2], scaleDat_samp[1])->scaleDat_samp
+}
+
+#remove NA's from dataset (not tolerated by kmeans)
+scaleDat_samp2=na.omit(scaleDat_samp)
+#kmeans on sample
+clust1=Kmeans(scaleDat=scaleDat_samp2,iter.max=iter.max,centers=Nclust, nstart=nstart1)
+
+#**CLEANUP**
+rm(scaleDat_samp)
+rm(scaleDat_samp2)
+#rm(samp_dat)
+#gc()
+
+
+#scale whole dataset
+scaleDat_all= simpleScale(data=gridmaps@data, pnames=predNames2)
+
+#remove NA's from dataset (not tolerated by kmeans)
+scaleDat_all2=na.omit(scaleDat_all)
+#kmeans whole dataset
+clust2=Kmeans(scaleDat=scaleDat_all2,iter.max=iter.max,centers=clust1$centers, nstart=nstart2)
+
+#**CLEANUP**
+rm(scaleDat_all2)
+rm(clust1)
+#gc()
+
+#remove small samples, redist to nearestneighbour attribute space
+if(samp_reduce==TRUE){
+clust3=sample_redist(pix= length(clust2$cluster),samples=Nclust,thresh_per=thresh_per, clust_obj=clust2)# be careful, samlple size not updated only clust2$cluster changed
+}else{clust2->clust3}
+
+#**CLEANUP**
+rm(clust2)
+#gc()
+#confused by these commented out lines
+#gridmaps$clust <- clust3$cluster
+#write.asciigrid(gridmaps["landform"], paste(spath,"/landform_",Nclust,".tif",sep=''),na.value=-9999)
+
+#make map of clusters 
+
+# new method to deal with NA values 
+#vector of non NA index
+n2=which(is.na(scaleDat_all$ele)==FALSE)
+#make NA vector
+vec=rep(NA, dim(scaleDat_all)[1])
+#replace values
+vec[n2]<-as.factor(clust3$cluster)
+
+#**CLEANUP**
+rm(scaleDat_all)
+#gc()
+
+#gridmaps$landform <- as.factor(clust3$cluster)
+gridmaps$landform <-vec
+writeRaster(raster(gridmaps["landform"]), paste(spath,"/landform_",Nclust,".tif",sep=''),NAflag=-9999,overwrite=T)
+
+fun=c('mean', 'sd', 'sum')
+for (FUN in fun){
+	samp=sampleCentroids(dat=gridmaps@data,predNames=predNames2, agg=gridmaps$landform, FUN=FUN)
+	assign(paste('samp_', FUN, sep=''), samp)
+}
+
+#replace asp with correct mmean asp
+asp=meanAspect(dat=gridmaps@data, agg=gridmaps$landform)
+samp_mean$asp<-asp
+#issue with sd and sum of aspect - try use 'circular'
+
+#write to disk for cmeans(replaced by kmeans 2)
+write.table(samp_mean,paste(spath, '/samp_mean.txt' ,sep=''), sep=',', row.names=FALSE)
+write.table(samp_sd,paste(spath, '/samp_sd.txt' ,sep=''), sep=',', row.names=FALSE)
+
+#make driving topo data file	
+lsp <- listpointsMake(samp_mean=samp_mean, samp_sum=samp_sum)
+write.table(lsp,paste(spath, '/listpoints.txt' ,sep=''), sep=',', row.names=FALSE)
+#make horizon files
+hor(listPath=spath)
+
+#get modal surface type of each sample 1=debris, 2=steep bedrock, 3=vegetation
+zoneStats=getSampleSurface(spath=spath,Nclust=Nclust, predFormat=predFormat)
+write.table(zoneStats, paste(spath,'/landcoverZones.txt',sep=''),sep=',', row.names=F)
+
+#**CLEANUP**
+rm(clust3)
+#rm(gridmaps)
+#gc()

@@ -1,0 +1,183 @@
+#==============================================================================================
+#			SETUP
+#==============================================================================================
+#prost process time series
+source('/home/joel/src/hobbes/src/code_toposub/toposub_src.r')
+require(raster)
+require(ncdf)
+
+#demLoc='/home/joel/src/hobbes/results/b10/box10/preds/ele.tif'
+col="snow_depth.mm."
+imisVar='HSno'
+file='surface.txt'
+
+#col="X100.000000"
+#imisVar='GST'
+#file='ground.txt'
+
+res_folder='results_snow2'
+box=10#c(4,8,9,10,11,14)
+for(boxi in box){
+spath=paste('/home/joel/src/hobbes/',res_folder,'/b',boxi,sep='')
+#==============================================================================================
+#			
+#==============================================================================================
+## get obs in grid box10
+## shapefile of val points
+points_shp=shapefile('/home/joel/data/shapefiles/imisUTM.shp')
+cp=shapefile('/home/joel/data/shapefiles/eraDomainUTM32.shp')
+## shapefile of val points
+dat_cut=points_shp[cp[boxi,],]
+dat_cut_id=dat_cut$ID
+
+
+## missingnss OBSERVATIONS
+nc=open.ncdf('/home/joel/data/imis/data/imis_data.nc')
+dat=get.var.ncdf(nc,var=imisVar)
+dat[dat>10000]<-NA
+total=rowSums(dat,na.rm=T) #check missingness
+
+#start=1
+start=175200
+end=263000
+## missingnss OBSERVATIONS 2
+dat2=dat[,start:end]
+#missingness
+miss=c()
+for (i in 1:161){
+n=length(which(is.na(dat2[i,])==F))/(end-start)
+miss=c(miss,n)
+}
+completevec=which(miss>0.6)
+n=which(dat_cut_id %in% completevec == T)
+stn_id=dat_cut_id[n]
+
+#miss[missvec]
+#stn_id=na.omit(miss)
+
+#n=total[dat_cut_id]
+#n[n>0]<-1
+#stn_id2=n*dat_cut_id
+#stn_id2[stn_id2==0]<-NA
+#stn_id=na.omit(stn_id2)
+
+#==============================================================================================
+#			LOOP
+#==============================================================================================
+rvec=c()
+bvec=c()
+rmvec=c()
+mobsvec=c()
+mmodvec=c()
+
+nmfrow=ceiling(sqrt(length(stn_id)))
+
+pdf(paste(spath, '/plotSD_gstinform',boxi,'.pdf',sep=''), width=15, height=15)
+par(mfrow=c(nmfrow,nmfrow))
+for(i in stn_id){
+station=i
+print(i)
+#==============================================================================================
+#			CALC FUZZY MEMBERSHIP OF POINT
+#==============================================================================================
+dat=read.table('/home/joel/data/transformedData/IMIS_meta.txt', sep=',', header=T)
+names(dat)[2]<-'svf'
+dat$aspC<-cos(dat$asp*(pi/180))
+dat$aspS<-sin(dat$asp*(pi/180))
+predNames<-c('ele', 'slp', 'svf', 'aspC', 'aspS')
+Nclust=200
+esPath=spath
+
+samp_mean <- read.table(paste(spath, '/samp_mean.txt' ,sep=''), sep=',',header=T)
+samp_sd <- read.table(paste(spath, '/samp_sd.txt' ,sep=''), sep=',', header=T)
+npoints=length(dat$id)
+fuzMemMat=valPoints(esPath=spath,predNames=predNames,cells=npoints,data=dat, samp_mean=samp_mean, samp_sd=samp_sd, Nclust=Nclust,fuzzy.e=1.4)
+
+
+#==============================================================================================
+#			COMPUTE WEIGHTED FUZZY TS
+#==============================================================================================
+
+fuzTS=fuzMemMat[station,]
+datVar=c()
+for (i in 1:Nclust){
+#format i here
+dat=read.table(paste(spath, '/sim',i,'/out/',file ,sep=''), sep=',', header=T)
+dv=dat[col]*fuzTS[i]
+datVar=cbind(datVar, dv[,1])
+}
+
+fuzTS=rowSums(datVar)
+
+#fuzTS=fuzTS[731:1825]
+
+
+#==============================================================================================
+#			Evalusate
+#==============================================================================================
+
+##OBSERVATIONS
+nc=open.ncdf('/home/joel/data/imis/data/imis_data.nc')
+dat=get.var.ncdf(nc,var='HSno')
+
+time=get.var.ncdf(nc,var='time')
+origin=substr(nc$dim$time$units,15,22)
+datesPl<-ISOdatetime(origin,0,0,0,0,0,tz='UTC') + time #dates sequence
+dayTS=as.POSIXct(strptime(format(datesPl,format="%Y/%m/%d %H:%m"),format="%Y/%m/%d"),tz="UTC")# tz correct?
+
+dat[dat>10000]<-NA
+total=rowSums(dat,na.rm=T) #check missingness
+#start=1
+start=175297#2006-2011
+#start=210385 #2008-2011
+end=262941
+
+
+
+#obs1=rowMeans(dat[,start:end ],na.rm=T)
+obs1=dat[station,start:end]
+
+day_cut=dayTS[start:end]
+dayVar=aggregate(obs1, by=list(day_cut), FUN=mean, na.rm=T)
+
+#winter period 1 dec - 31 may
+days=levels(as.factor(day_cut))
+winterSeq=c(62:243, 427:609, 793:974, 1158:1339, 1523:1704)
+winterSeq2=c(793:974, 1158:1339, 1523:1704)
+
+#stupid correction of summer 'snow' 
+dayVar$x[dayVar$x<30]<-0
+
+#used in 15yr 3h step sim (mistake)
+#fuzTS=aggregate.ts(fuzTS, nfrequency=1/8, FUN=mean)
+#fuzTS=as.numeric(fuzTS)
+
+mbias=round(mean(fuzTS/10-dayVar$x, na.rm=T), 2)
+rms=round(rmse(dayVar$x,fuzTS/10),2)
+r=round(cor(dayVar$x,fuzTS/10, use='complete.obs'),2)
+
+
+mobs=mean(dayVar$x[winterSeq2], na.rm=T)
+mmod=mean(fuzTS[winterSeq2]/10, na.rm=T)
+plot(dayVar$x, type='l',main=paste('R=',r,' RMSE=',rms,' mbias=',mbias, sep=''))
+lines(fuzTS/10, col='red')
+
+rvec=c(rvec,r)
+bvec=c(bvec, mbias)
+rmvec=c(rmvec, rms)
+mobsvec=c(mobsvec, mobs)
+mmodvec=c(mmodvec, mmod)
+print(i)
+}
+dev.off()
+
+mobsvec=round(mobsvec,2)
+mmodvec=round(mmodvec,2)
+
+df=data.frame(stn_id, rvec,rmvec,bvec,mobsvec,mmodvec)
+write.table(df, paste(spath, '/pointStats.txt',sep=''), sep=',', row.names=F) 
+}
+
+mean(bvec)
+
+

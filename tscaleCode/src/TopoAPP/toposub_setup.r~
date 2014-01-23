@@ -1,0 +1,144 @@
+#experiment setup
+#=======================================================================================================
+#			PACKAGES
+#=======================================================================================================
+require(ncdf)
+require(raster)
+require(rgdal)
+require(insol)
+require(IDPmisc)
+require(colorRamps)
+#======================================================================================
+#				EXPERIMENT DIRECTORY
+#======================================================================================
+epath='/home/joel/experiments/alpsSim2/' #created manually
+master=paste(epath,'_master/',sep='')#created manually
+datRoot=paste(master,'/eraDat/',sep='')#needed only when getERA=T
+dir.create(datRoot)
+getERA=F
+
+#=======================================================================================================
+#			DIRECTORIES/PATHS TO SET
+#=======================================================================================================
+exePath='/home/joel/src/geotop/'
+exe='./geotop1.225-13'
+#location of master geotopinpts
+#metaFile='/home/joel/data/ibutton/IB_dirruhorn/mf_IB.txt' #points meta file c(id,ele,slp, asp, sky, lat,lon)
+#eraBoxEle=read.table('/home/joel/data/transformedData/eraBoxEle.txt', header=T, sep=',') #preprocessed grid ele (slow)
+#optional function
+
+#=======================================================================================================
+#			PARAMETERS TO SET -tsub
+#=======================================================================================================
+file1<-'/out/ground.txt'
+file2<-'/out/surface.txt'
+beg <- "01/01/2009 00:00:00" #start cut of data timeseries
+end <- "01/01/2010 00:00:00" #end cut data timeseries
+cols="X100.000000"
+Nclust=100
+rad=TRUE #SLP/ASP IN RADIANS
+#fuzzy=FALSE
+#inform=TRUE
+
+
+#==============================================================================
+# 			TOPOSUB PARAMETERS -GENERALLY FIXED
+#==============================================================================
+
+#key parameters
+Nclust =Nclust#<-Nclust [K]
+iter.max=20# clusters if prescribed#check 000029 for 100 iter heavy averaging somehow
+nRand=100000#sample size
+fuzzy.e=1.4 #[M]
+nstart1=10 # nstart for sample kmeans [find centers]
+nstart2=1 #nstart for entire data kmeans [apply centers]
+thresh_per=0.001 # needs experimenting with
+
+# input predictors
+predNames<-c('ele', 'slp', 'asp', 'svf') #[PRED]
+predFormat='.tif'
+
+#switches
+findn=0
+samp_reduce=TRUE#rm insig sample, redist members
+
+#experimental parameters [normal behaviour all = FALSE]
+randomKmeansInit=FALSE#
+
+#method to concatenate
+"&" <- function(...) UseMethod("&") 
+"&.default" <- .Primitive("&") 
+"&.character" <- function(...) paste(...,sep="") 
+
+#=======================================================================================================
+#			PARAMETERS TO SET -tscale
+#=======================================================================================================
+startDate='2008-12-03 00:00:00'
+endDate='2010-01-04 00:00:00'
+pfactor=0.25 #liston parameter
+
+#=======================================================================================================
+#			DIRECTORIES RELATIVE
+#=======================================================================================================
+tmp=paste(epath,'tmp/',sep='')
+outRootPl=paste(tmp,'pressurelevel/',sep='')
+outRootSurf=paste(tmp,'surface/',sep='')
+outRootmet=paste(tmp,'all/',sep='')
+dir.create(tmp,recursive=T)
+dir.create(outRootPl)
+dir.create(outRootSurf)
+dir.create(outRootmet)
+
+#=======================================================================================================
+#			INFILES
+#=======================================================================================================
+#PRESSURE LEVEL FIELDS (AND DEWT)
+infileG=paste(datRoot, 'gpot.nc',sep='')
+infileT=paste(datRoot, 'tpl.nc',sep='')
+infileRh=paste(datRoot, 'rhpl.nc',sep='')
+infileU=paste(datRoot, 'upl.nc',sep='')
+infileV=paste(datRoot, 'vpl.nc',sep='')
+infileD=paste(datRoot, 'dt.nc',sep='')
+
+#SURFACE FIELDS
+lwFile=paste(datRoot, 'strd.nc',sep='')
+swFile=paste(datRoot, 'ssrd.nc',sep='')
+pFile=paste(datRoot, 'p.nc',sep='')
+tFile=paste(datRoot, 't.nc',sep='')
+toaFile=paste(datRoot, 'toa.nc',sep='')
+
+#other
+step=3 #time step of accumulated fields
+
+#======================================================================================
+#				INFILES
+#======================================================================================
+ddem=raster('/home/joel/experiments/alpsSim/_master/ASTERv2_UTM32N.tif')#domain dem
+dasp=raster('/home/joel/experiments/alpsSim/_master/asp')
+dslp=raster('/home/joel/experiments/alpsSim/_master/slp')
+dsky=raster('/home/joel/experiments/alpsSim/_master/sky')
+dshp=shapefile('/home/joel/experiments/alpsSim/_master/eraDomainUTM32.shp')#domain shp
+dshp2=shapefile('/home/joel/experiments/alpsSim/_master/eraDomainWGS.shp')#domain shp
+
+#======================================================================================
+#				NUMBER SIMULATION BOXES
+#======================================================================================
+nbox=length(dshp)
+
+#======================================================================================
+#				SET UP SIMULATION DIRECTORIES
+#======================================================================================
+for( i in 1:nbox){
+spath=paste(epath, '/box', i,sep='') #simulation path
+dir.create(spath)
+opath=paste(epath, '/box', i,'/out',sep='') #simulation output path
+dir.create(opath)
+dir.create(paste(spath, '/tmp', sep='')) #tmp folder
+#set up folders
+dir.create(paste(spath, '/fuzRst', sep=''))
+dir.create(paste(spath, '/rec', sep=''))
+}
+
+#======================================================================================
+#				WRITE GLOBAL PARAMETER FILE
+#======================================================================================

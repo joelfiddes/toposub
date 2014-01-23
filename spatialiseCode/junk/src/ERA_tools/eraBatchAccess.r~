@@ -1,0 +1,18 @@
+#ERA batch access: https://software.ecmwf.int/wiki/display/WEBAPI/Accessing+ECMWF+data+servers+in+batch?
+#Installing the client library (Python)
+sudo apt-get install python-pip
+sudo pip install https://software.ecmwf.int/wiki/download/attachments/23694554/ecmwf-api-client-python.tgz
+#Installing your API key
+#register:https://apps.ecmwf.int/registration/
+#login:https://apps.ecmwf.int/auth/login/ 
+#get key:https://api.ecmwf.int/v1/key/
+#copy key information in this page and paste it in the file $HOME/.ecmwfapirc.
+
+cat > ~/.ecmwfapirc
+#return,paste:
+{
+    "url"   : "https://api.ecmwf.int/v1",
+    "key"   : "a75924f7daca6a5ad695013ec520c8a6",
+    "email" : "joelfiddes@gmail.com"
+}
+#ctrl -d

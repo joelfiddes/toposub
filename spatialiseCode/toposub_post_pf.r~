@@ -1,0 +1,126 @@
+######################################################################################################
+#	
+#			TOPOSUB POSTPROCESSOR 1
+#			
+######################################################################################################
+source('/home/joel/sim/gst200_spatial/src/code_toposub/toposub_src.r')
+require(raster)
+col='X9999.000000'
+file1<-'/out/ground.txt' #path of geotop output file relative to sim directory
+beg <- "02/10/1984 00:00:00" #start cut of data timeseries dd/mm/yyyy h:m:s
+end <- "01/10/2011 00:00:00" #end cut data timeseries
+Nclust=200
+session='pf200'
+date='_01101984_01102011'
+
+
+
+
+#===================MAGST/year===============
+#bseq=seq(1984,2010,1)
+#eseq=seq(1985,2011,1)
+#pfpvec=c()
+#for (year in 2){#1:length(bseq)){
+#years=bseq[year]
+#beg <- paste("02/10/",bseq[year]," 00:00:00", sep='') #start cut of data timeseries dd/mm/yyyy h:m:s
+#end <- paste("01/10/",eseq[year]," 00:00:00", sep='') 
+#===================MAGST/year===============
+
+for(box in 3:15){
+#n2=formatC(n, width=2,flag='0')
+boxf=formatC(box, width=2,flag='0')
+spath=paste('/home/joel/sim/',session,'/GTSC_nS',box,'_Nc',Nclust,'_X100.000000',date,'/sim/result/B000',boxf,sep='')
+print(box)
+
+
+outfile=paste(spath,'/meanX_',col,'.txt',sep='')
+file.create(outfile)
+
+for ( i in 1:Nclust){
+gsimindex=formatC(i, width=5,flag='0')
+simpath=paste(spath,'/result/S', gsimindex,sep='')
+#esPath=simpath
+
+#read in lsm output
+sim_dat=read.table(paste(simpath,file1,sep=''), sep=',', header=T)
+#cut timeseries
+sim_dat_cut=timeSeriesCut(esPath=simpath,col=col, sim_dat=sim_dat, beg=beg, end=end)	
+#mean annual values
+timeSeries2(spath=spath,col=col, sim_dat_cut=sim_dat_cut,FUN=max)
+}
+landform<-raster(paste(spath,'/landform_200.tif',sep=''))
+crispSpatial2(col=col,Nclust=Nclust,esPath=spath, landform=landform)
+}
+
+
+
+#r3=raster('/home/joel/sim/gst200_8411/GTSC_nS3_Nc200_X100.000000_01101984_01102011/sim/result/B00003/crisp_X9999.000000_200.tif')
+#r4=raster('/home/joel/sim/gst200_8411/GTSC_nS4_Nc200_X100.000000_01101984_01102011/sim/result/B00004/crisp_X9999.000000_200.tif')
+#r5=raster('/home/joel/sim/gst200_8411/GTSC_nS5_Nc200_X100.000000_01101984_01102011/sim/result/B00005/crisp_X9999.000000_200.tif')
+#r6=raster('/home/joel/sim/gst200_8411/GTSC_nS6_Nc200_X100.000000_01101984_01102011/sim/result/B00006/crisp_X9999.000000_200.tif')
+#r7=raster('/home/joel/sim/gst200_8411/GTSC_nS7_Nc200_X100.000000_01101984_01102011/sim/result/B00007/crisp_X9999.000000_200.tif')
+#r8=raster('/home/joel/sim/gst200_8411/GTSC_nS8_Nc200_X100.000000_01101984_01102011/sim/result/B00008/crisp_X9999.000000_200.tif')
+#r9=raster('/home/joel/sim/gst200_8411/GTSC_nS9_Nc200_X100.000000_01101984_01102011/sim/result/B00009/crisp_X9999.000000_200.tif')
+#r10=raster('/home/joel/sim/gst200_8411/GTSC_nS10_Nc200_X100.000000_01101984_01102011/sim/result/B00010/crisp_X9999.000000_200.tif')
+#r11=raster('/home/joel/sim/gst200_8411/GTSC_nS11_Nc200_X100.000000_01101984_01102011/sim/result/B00011/crisp_X9999.000000_200.tif')
+#r12=raster('/home/joel/sim/gst200_8411/GTSC_nS12_Nc200_X100.000000_01101984_01102011/sim/result/B00012/crisp_X9999.000000_200.tif')
+#r13=raster('/home/joel/sim/gst200_8411/GTSC_nS13_Nc200_X100.000000_01101984_01102011/sim/result/B00013/crisp_X9999.000000_200.tif')
+#r14=raster('/home/joel/sim/gst200_8411/GTSC_nS14_Nc200_X100.000000_01101984_01102011/sim/result/B00014/crisp_X9999.000000_200.tif')
+#r15=raster('/home/joel/sim/gst200_8411/GTSC_nS15_Nc200_X100.000000_01101984_01102011/sim/result/B00015/crisp_X9999.000000_200.tif')
+#rst=merge(r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15)
+
+#===================MAGST/year===============
+#rst=raster('/home/joel/sim/gst200_8411/GTSC_nS10_Nc200_X100.000000_01101984_01102011/sim/result/B00010/crisp_X9999.000000_200.tif')
+#writeRaster(rst, paste('~/sim/spatial/pf10m_',years,'2.tif',sep=''))
+#pfpvec=c()
+#for (year in 1:length(bseq)){
+#years=bseq[year]
+#rst=raster( paste('~/sim/spatial/pf10m_',years,'2.tif',sep=''))
+#===================MAGST/year===============
+
+
+rst[rst>0]<-NA
+rst[rst<=0]<-1
+
+
+
+ch=shapefile('/home/joel/data/shapefiles/CHE_adm/CHE_adm0_UTM.shp') 
+rst2=mask(rst,ch)
+rst2=rst
+s=cellStats(rst2, sum)
+pf=(s*30*30)/1000000
+
+pfpvec=c(pfpvec,pf)
+#print(years)
+}
+
+#pfpvec=c()
+#for(box in 3:15){
+#boxf=formatC(box, width=2,flag='0')
+#spath=paste('/home/joel/sim/',session,'/GTSC_nS',box,'_Nc',Nclust,'_X100.000000',date,'/sim/result/B000',boxf,sep='')
+#rst=raster(paste(spath, '/crisp_X9999.000000_200.tif', sep=''))
+#rst[rst>0]<-NA
+#rst[rst<=0]<-1
+#pfp=cellStats(rst,sum)
+#pfpvec=c(pfpvec,pfp)
+#}
+
+##compute sqkm permafrost
+#pfpsum=sum(pfpvec)
+#pfkm2=(pfpsum*30*30)/1000000
+
+
+#test spin up by plotting all sample timeseries - theory that mre samples join permafrost territory as time progressesses ie spin up not long enough.
+ 
+#cols=rainbow(200)
+#plot(dat$X9999.000000,type='l',ylim=c(-10,20))
+# for(i in 1:200){
+#gsimindex=formatC(i, width=5,flag='0')
+#dat=read.table(paste('/home/joel/sim/gst200_8411/GTSC_nS10_Nc200_X100.000000_01101984_01102011/sim/result/B00010/result/S',gsimindex,'/out/ground.txt',sep=''),sep=',', header=T)
+#lines(dat$X9999.000000,col=cols[i])
+#}
+
+##coincidence of change in pf area 
+#points(seq(1,27*365.25,365.25),pfpvec/100)
+
+

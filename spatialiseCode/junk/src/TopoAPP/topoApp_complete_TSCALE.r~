@@ -1,0 +1,106 @@
+#TOPOAPP - gridboxes (as opposed to points/mf)
+t1=Sys.time()
+
+
+#======================================================================================
+#				CODE
+#======================================================================================
+
+## parameter file
+source('~/src/TopoAPP/parfile_tscale.r')
+## experiment setup
+source('~/src/TopoAPP/expSetup1.r')
+## get ERA_I for whole domain
+if(fetchERA==T){
+source('~/src/TopoAPP/getERAscript.r') #test later
+}
+
+
+## preprocess ERA_I fieldes
+print('*** PRE-PROCESSING CLIMATE DATA ***')
+source('~/src/TopoAPP/toposcale_pre.r')
+
+## loop through grid boxs
+for( i in nboxSeq){
+
+source('/home/joel/src/hobbes/src/TopoAPP/subsetPoints.R')
+
+## crisp toposub
+print(paste('*** SET UP BOX ', i,' SIMULATION DIRECTORIES ***',sep=''))
+source('~/src/TopoAPP/expSetupLoop.r')
+#print(paste('*** TOPOSUB BOX ***', i,sep=''))
+#source('~/src/TopoAPP/toposub_pre_CRISP.r')
+
+## toposcale
+print(paste('*** TOPOSCALE 1 BOX ***', i,sep=''))
+source('~/src/TopoAPP/toposcale.r')
+source('~/src/TopoAPP/toposcale_writeMet.r')
+
+## simulation setup
+print(paste('*** SET UP BOX ', i,' SIMULATION 1 ***',sep=''))
+source('~/src/TopoAPP/expSetup2.r')
+
+## make simulation .inpts file
+source('~/src/TopoAPP/makeInpts.r')
+
+## make batchfile
+source('~/src/TopoAPP/makebatch.r')
+
+## sim 1
+print(paste('*** LSM RUN 1 ON BOX ', i,' ***',sep=''))
+setwd(spath)
+system('./batch.txt')
+
+##======= INFORMED SAMPLING -OPTIONAL ===========================================
+#if(inform==T){
+#print(paste('*** TOPOSUB INFORMED SAMPLING BOX', i,' ***',sep=''))
+### post process
+#source('~/src/TopoAPP/toposub_post_1.r')
+#source('~/src/TopoAPP/toposub_pre_inform.r') #-optional
+### toposcale
+#print(paste('*** TOPOSCALE 2 BOX ', i,' ***',sep=''))
+#source('~/src/TopoAPP/toposcale.r')
+#source('~/src/TopoAPP/toposcale_writeMet.r')
+### simulation setup
+#print(paste('*** SET UP BOX ', i,' SIMULATION 2',' ***',sep=''))
+#source('~/src/TopoAPP/expSetup2.r')
+### make simulation .inpts file
+#source('~/src/TopoAPP/makeInpts.r')
+### sim 2
+#print(paste('*** LSM RUN 2 ON BOX ', i,' ***',sep=''))
+#setwd(spath)
+#system('./batch.txt')
+#}
+#=======================================================================
+
+#if(VALIDATE==T){
+### fuzzy membership -OPTIONAL
+#print(paste('*** TOPOSUB FUZZY VALIDATE POINTS BOX ', i,' ***',sep=''))
+
+###read in val points
+#valPoints <- read.table(paste(root, '/src/valPoints.txt' ,sep=''), sep=',',header=T)
+###read in sample centroid data
+#samp_mean <- read.table(paste(spath, '/samp_mean.txt' ,sep=''), sep=',',header=T)
+#samp_sd <- read.table(paste(spath, '/samp_sd.txt' ,sep=''), sep=',', header=T)
+
+#fuzMemMat=valPoints(esPath=spath,predNames=predNames,data=dat, samp_mean=samp_mean, samp_sd=samp_sd, Nclust=Nclust,fuzzy.e=fuzzy.e)
+#}
+
+
+
+
+
+
+#if(fuzzy==T){
+### fuzzy membership -OPTIONAL
+#print(paste('*** TOPOSUB FUZZY MEMBERSHIP BOX ', i,' ***',sep=''))
+#source('~/src/TopoAPP/toposub_pre_fuzzy.r') #-optional
+#}
+
+### post process
+#print(paste('*** TOPOSUB POST-PROCESS BOX ', i,' ***',jjsep=''))
+#source('~/src/TopoAPP/toposub_post_2.r')
+#}
+t2=Sys.time()-t1
+
+print(paste('*** BOX ', i,' COMPLETE: ',t2,' ***',sep=''))
