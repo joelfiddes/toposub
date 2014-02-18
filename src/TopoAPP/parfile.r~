@@ -21,7 +21,7 @@ swTopo==F
 #			MOST COMMON SETTINGS
 #=======================================================================================================
 #TSUB
-Nclust=10 
+Nclust=100 
 #TSUB resolution
 file1<-'/out/ground.txt' 
 #path of geotop output file relative to sim directory
@@ -129,10 +129,13 @@ eraBoxEleDem=paste(topoRoot,'/20121011073246_1677224548.asc',sep='')
 dshp=shapefile(paste(root,'sim/_master/shp/eraDomainUTM32.shp',sep=''))#domain shp - same system as grids
 dshp2=shapefile(paste(root,'sim/_master/shp/eraDomainWGS.shp',sep=''))#domain shp for getting ERA (must be WGS)
 
+#method to 
+climatolP=FALSE # default = FALSE
+if(climtolP==TRUE){
 #precip grids
 subWeights=paste(topoRoot,'/subWeights.tif',sep='')
 idgrid=paste(topoRoot,'/idgrid.tif',sep='')
-
+}
 #===============================================================================
 #				ERA FETCH PARAMETERS
 #=============================================================================

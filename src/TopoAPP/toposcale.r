@@ -184,10 +184,11 @@ pSurfm=matrix(rep(pSurf,npoints),ncol=npoints)
 #weights_stk=stack(subWeights)
 #cf=extract(weights_stk, valShp)
 #z=t(cbind(cf,cf,cf,cf,cf,cf,cf,cf,cf,cf,cf,cf,cf))#repeat for x (13) years of dataframe
-
+if(climtolP==TRUE){
 subw=brick(subWeights)
 idgrid=raster(idgrid)
 df=data.frame(getValues(idgrid),getValues(subw))
+}
 #============================================================================================
 #			Apply Liston lapse
 #=============================================================================================

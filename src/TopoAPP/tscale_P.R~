@@ -60,8 +60,8 @@ df=data.frame(getValues(idgrid),getValues(subw))
 #=============================================================================================
 ed=mf$eleDiff
 lapseCor=(1+(pfactor*(ed/1000))/(1-(pfactor*(ed/1000))))
-pSurf_lapse=t(pSurfm)*lapseCor
-pSurf_lapse2=t(pSurf_lapse)
+pSurf_lapseT=t(pSurfm)*lapseCor
+pSurf_lapse=t(pSurf_lapseT)
 write.table(pSurf_lapse,paste(spath,  '/pSurf_lapse.txt',sep=''), row.names=F, sep=',')
 
 

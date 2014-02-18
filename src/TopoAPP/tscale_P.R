@@ -52,9 +52,11 @@ load(paste(outRootmet,'/pSurf',sep=''))
 pSurf=pSurf_cut[,nbox] #in order of mf file
 pSurfm=matrix(rep(pSurf,npoints),ncol=npoints)
 
+if(climtolP==TRUE){
 subw=brick(subWeights)
 idgrid=raster(idgrid)
 df=data.frame(getValues(idgrid),getValues(subw))
+}
 #============================================================================================
 #			Apply Liston lapse
 #=============================================================================================

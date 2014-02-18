@@ -171,7 +171,7 @@ toam=matrix(rep(toa,npoints),ncol=npoints)
 
 dd=as.POSIXct(datesSurf_cut)
 
-sol=solarCompute(swin=swm,toa=toam, dates=dd,mf=mf)
+sol=solarCompute(swin=swm,toa=toam, dates=dd,mf=mf,tz=tz)
 
 #========================================================================
 #		COMPUTE P
