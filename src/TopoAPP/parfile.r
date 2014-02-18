@@ -16,7 +16,7 @@ parTscale=TRUE #parallel tscale
 #switches
 fetchERA=FALSE	# retreive ERA forcing from ECMWF servers?
 fuzReduce=FALSE	# reduce number of fuzzy members to top n most significant
-swTopo==FALSE
+swTopo=FALSE
 #=======================================================================================================
 #			MOST COMMON SETTINGS
 #=======================================================================================================
@@ -126,8 +126,8 @@ lc=raster(paste(topoRoot,'/lc.tif',sep=''))
 mask=raster(paste(topoRoot,'/mask.tif',sep=''))
 eraBoxEleDem=paste(topoRoot,'/20121011073246_1677224548.asc',sep='')
 #shp
-dshp=shapefile(paste(root,'sim/_master/shp/eraDomainUTM43.shp',sep=''))#domain shp - same system as grids
-dshp2=shapefile(paste(root,'sim/_master/shp/eraDomainWGS.shp',sep=''))#domain shp for getting ERA (must be WGS)
+dshp=shapefile(paste(root,'sim/_master/shp/ERADomainUTM43.shp',sep=''))#domain shp - same system as grids
+dshp2=shapefile(paste(root,'sim/_master/shp/ERADomainWGS.shp',sep=''))#domain shp for getting ERA (must be WGS)
 
 #method to apply climatology to get subgrid distribution of P
 climatolP=FALSE # default = FALSE
