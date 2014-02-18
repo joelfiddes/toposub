@@ -64,7 +64,7 @@ toa=toaSurf_cut[,nbox]
 toam=matrix(rep(toa,npoints),ncol=npoints)
 dd=as.POSIXct(datesSurf_cut)
 
-if(swTopo==T){
+if(swTopo==Topo){
 #START
 #partition
 sdif=solarPartition(swPoint=swm,toaPoint=toam, out='dif')
