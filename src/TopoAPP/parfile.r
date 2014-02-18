@@ -2,7 +2,7 @@
 #			SIMULATION BOX (S)
 #=======================================================================================================
 #sequence of coarse grids to compute (can be sequence if run locally or single value automaticlly written by GC3pie in cloud mode)
-nboxSeq=
+nboxSeq=1
 
 #=======================================================================================================
 #			SWITCHES
@@ -16,12 +16,12 @@ parTscale=TRUE #parallel tscale
 #switches
 fetchERA=FALSE	# retreive ERA forcing from ECMWF servers?
 fuzReduce=FALSE	# reduce number of fuzzy members to top n most significant
-swTopo==F
+swTopo==FALSE
 #=======================================================================================================
 #			MOST COMMON SETTINGS
 #=======================================================================================================
 #TSUB
-Nclust=100 
+Nclust=10
 #TSUB resolution
 file1<-'/out/ground.txt' 
 #path of geotop output file relative to sim directory
@@ -29,12 +29,12 @@ col="X100.000000"
 #"snow_depth.mm." /"Tair.C." /tv to inform cluster and postprocess results (meanX..)
 beg <- "01/10/2010 00:00:00"
  #start cut of data timeseries dd/mm/yyyy h:m:s (GEOtop format)
-end <- "01/10/2011 00:00:00" 
+end <- "01/11/2010 00:00:00" 
 #end cut data timeseries
 
 #TSCALE
-startDate='2010-09-01 00:00:00' #start cut of driving climate (ERA format)	#yyyy-mmd-d h:m:s
-endDate='2011-11-01 00:00:00'#end cut of driving climate 
+startDate='2010-09-30 00:00:00' #start cut of driving climate (ERA format)	#yyyy-mmd-d h:m:s
+endDate='2011-11-02 00:00:00'#end cut of driving climate 
 #set as buffer to TSUB dates to allow margin at 00 /2100 etc
 
 #=======================================================================================================
@@ -126,7 +126,7 @@ lc=raster(paste(topoRoot,'/lc.tif',sep=''))
 mask=raster(paste(topoRoot,'/mask.tif',sep=''))
 eraBoxEleDem=paste(topoRoot,'/20121011073246_1677224548.asc',sep='')
 #shp
-dshp=shapefile(paste(root,'sim/_master/shp/eraDomainUTM32.shp',sep=''))#domain shp - same system as grids
+dshp=shapefile(paste(root,'sim/_master/shp/eraDomainUTM43.shp',sep=''))#domain shp - same system as grids
 dshp2=shapefile(paste(root,'sim/_master/shp/eraDomainWGS.shp',sep=''))#domain shp for getting ERA (must be WGS)
 
 #method to apply climatology to get subgrid distribution of P
