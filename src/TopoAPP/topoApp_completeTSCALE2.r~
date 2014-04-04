@@ -1,8 +1,8 @@
 #TOPOAPP - gridboxes (as opposed to points/mf)
-t1=Sys.time()
-#=======================================================================================================
+
+#======================================================================================
 #			SET EXPERIMENT ROOT
-#=======================================================================================================
+#======================================================================================
 root=
 
 #======================================================================================
@@ -11,21 +11,22 @@ root=
 
 ## parameter file
 source(paste(root,'/src/TopoAPP/parfile_tscale.r',sep=''))
+
 ## experiment setup
 source(paste(root,'/src/TopoAPP/expSetup1.r',sep=''))
+
 ## get ERA_I for whole domain
 	if(fetchERA==T){
 	source(paste(root,'/src/TopoAPP/getERAscript.r',sep='')) #test later
 	}
 
 
-## preprocess ERA_I fieldes
+## preprocess ERA_I fields
 print('*** PRE-PROCESSING CLIMATE DATA ***')
 source(paste(root,'/src/TopoAPP/toposcale_pre.r',sep=''))
 
 ## loop through grid boxs
 for(nbox in nboxSeq){
-
 	simindex=formatC(nbox, width=5,flag='0')
 
 	## crisp toposub
