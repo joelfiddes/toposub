@@ -6,3 +6,6 @@ GSN is licensed under the GNU GPL license, version 3 (or later). Basically, it g
 
 #Citation 
 Fiddes, J. and Gruber, S.: TopoSUB: a tool for efficient large area numerical modelling in complex topography at sub-grid scales, Geosci. Model Dev., 5, 1245-1257, doi:10.5194/gmd-5-1245-2012, 2012.
+
+# Application
+Published here: http://www.the-cryosphere.net/9/411/2015/tc-9-411-2015.html
