@@ -8,5 +8,5 @@ Published here: http://www.the-cryosphere.net/9/411/2015/tc-9-411-2015.html
 Fiddes, J. and Gruber, S.: TopoSUB: a tool for efficient large area numerical modelling in complex topography at sub-grid scales, Geosci. Model Dev., 5, 1245-1257, doi:10.5194/gmd-5-1245-2012, 2012.
 
 # License
-GSN is licensed under the GNU GPL license, version 3 (or later). Basically, it grants you the rights to use, redistribute and modify TopoSUB. However, if you want to redistribute a modified version of TopoSUB, you must provide the complete source code of your modifications.
+TopoSUB is licensed under the GNU GPL license, version 3 (or later). Basically, it grants you the rights to use, redistribute and modify TopoSUB. However, if you want to redistribute a modified version of TopoSUB, you must provide the complete source code of your modifications.
 
